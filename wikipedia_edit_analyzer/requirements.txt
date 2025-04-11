@@ -1,0 +1,7 @@
+wikipedia
+scikit-learn
+numpy
+umap-learn
+# matplotlib # No longer needed for the main visualization output
+plotly
+requests
