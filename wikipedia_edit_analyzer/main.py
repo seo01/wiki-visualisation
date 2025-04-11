@@ -41,7 +41,7 @@ def run_step(script_name, article_title, file_prefix, args_list=None):
         command.extend([
             "--input_hist_dir", DATA_DIR,
             "--input_pred_dir", DATA_DIR,
-            "--input_diffs_dir", DATA_DIR, # Added diffs input dir
+            # Removed --input_diffs_dir
             "--output_dir", OUTPUT_DIR
         ])
         # Add plot title based on article title
@@ -97,18 +97,13 @@ def main():
         print("Pipeline aborted due to vectorization failure.", file=sys.stderr)
         sys.exit(1)
 
-    # Step 3: Calculate Diffs
-    if not run_step("calculate_diffs.py", args.article_title, file_prefix):
-         print("Pipeline aborted due to diff calculation failure.", file=sys.stderr)
-         sys.exit(1)
-
-    # Step 4: Predict Edits
+    # Step 3: Predict Edits (Renumbered from Step 4)
     predict_args = ["-n", str(args.num_predictions), "-l", str(args.look_back)]
     if not run_step("predict_edits.py", args.article_title, file_prefix, predict_args):
         print("Pipeline aborted due to prediction failure.", file=sys.stderr)
         sys.exit(1)
 
-    # Step 5: Visualize Edits
+    # Step 4: Visualize Edits (Renumbered from Step 5)
     if not run_step("visualize_edits.py", args.article_title, file_prefix):
         print("Visualization step failed.", file=sys.stderr)
         sys.exit(1)

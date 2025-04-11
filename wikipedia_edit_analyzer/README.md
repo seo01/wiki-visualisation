@@ -7,13 +7,12 @@ This project analyzes the revision history of a Wikipedia article, visualizes th
 *   Fetches the content of recent revisions for a given Wikipedia article (currently uses placeholder content).
 *   Converts revision texts into numerical vectors using TF-IDF.
 *   Predicts future edit vectors using simple linear extrapolation based on recent trends.
-*   Calculates the differences (diffs) between consecutive revisions.
 *   Reduces the dimensionality of historical and predicted vectors using UMAP.
 *   Generates an **interactive HTML 2D plot** visualizing:
     *   The historical edit path up to `N-M` edits ago (where `N` is total revisions fetched and `M` is `--num_predictions`).
     *   A **fork** showing both the *actual* path for the last `M` edits and the *predicted* path for those same `M` edits, allowing visual comparison.
-    *   Diffs between consecutive historical revisions are shown on hover.
     *   An annotation showing the Euclidean distance between the final actual point and the final predicted point in the 2D UMAP space (a simple prediction error score).
+    *   *(Note: Hover text displaying diffs has been removed for performance.)*
 
 ## Project Structure
 
@@ -23,16 +22,16 @@ wikipedia_edit_analyzer/
 │   ├── raw_edits.json
 │   ├── edit_vectors.npy
 │   ├── edit_vectors.npy
-│   ├── predicted_vectors.npy
-│   └── edit_diffs.json       # Added: Diffs between revisions
+│   └── predicted_vectors.npy # Removed edit_diffs.json
 ├── output/               # Stores the final visualization
-│   └── edit_path.html        # Changed: Output is now HTML
+│   └── edit_path.html
 ├── download_edits.py     # Step 1: Fetch edits
 ├── vectorize_edits.py    # Step 2: Convert edits to vectors (TF-IDF)
-├── calculate_diffs.py    # Step 3: Calculate diffs between revisions
-├── predict_edits.py      # Step 4: Predict future edit vectors (Extrapolation)
-├── visualize_edits.py    # Step 5: Reduce dimensions (UMAP) and plot (Plotly HTML)
+# Removed calculate_diffs.py step
+├── predict_edits.py      # Step 3: Predict future edit vectors (Extrapolation)
+├── visualize_edits.py    # Step 4: Reduce dimensions (UMAP) and plot (Plotly HTML)
 ├── main.py               # Wrapper script to run the full pipeline
+├── batch_run.py          # Script for processing multiple articles
 ├── requirements.txt      # Python dependencies
 └── README.md             # This file
 ```
@@ -68,7 +67,7 @@ python main.py "Name of Wikipedia Article"
 ```bash
 python main.py "Python (programming language)"
 ```
-This will generate an interactive HTML file named `output/edit_path.html`. Open this file in a web browser. The plot shows the main historical path in grey, the actual final edits in green, and the predicted path in dashed orange, branching off from the main path. Hover over points on the grey and green paths to see the corresponding diff text.
+This will generate an interactive HTML file named `output/edit_path.html`. Open this file in a web browser. The plot shows the main historical path, the actual final edits, and the predicted path branching off. Hover information is disabled for performance.
 
 ### Options
 
@@ -98,14 +97,11 @@ python vectorize_edits.py -i data -o data
 # Predict (Uses data/edit_vectors.npy by default)
 python predict_edits.py -n 10 -l 10 -i data -o data
 
-# Calculate Diffs (Uses data/raw_edits.json by default)
-python calculate_diffs.py -i data -o data
-
 # Predict (Uses data/edit_vectors.npy by default)
-python predict_edits.py -n 10 -l 10 -i data -o data
+python predict_edits.py --file-prefix "your_prefix" -n 10 -l 10 -i data -o data
 
 # Visualize (Uses data files by default, prefix needed if not running via main.py)
-python visualize_edits.py --file-prefix "your_prefix" -i_hist data -i_pred data -i_diffs data -o output -t "Custom Plot Title"
+python visualize_edits.py --file-prefix "your_prefix" -i_hist data -i_pred data -o output -t "Custom Plot Title"
 ```
 
 ## Batch Processing
@@ -157,12 +153,12 @@ To process multiple articles at once and generate a summary page:
     ```
 
 3.  **View the results:**
-    *   Intermediate files (`_raw_edits.json`, `_edit_vectors.npy`, etc.) and individual outputs (`_edit_path.html`, `_score.json`) for each article will be saved in the `data/` and `output/` directories, prefixed with a slug generated from the article title.
-    *   A summary HTML page `output/batch_summary.html` will be created, displaying the individual plots in a two-column layout, ordered by prediction score (lowest first).
+    *   Intermediate files (`_raw_edits.json`, `_edit_vectors.npy`, `_predicted_vectors.npy`) and individual outputs (`_edit_path.html`, `_score.json`) for each article will be saved in the `data/` and `output/` directories, prefixed with a slug generated from the article title.
+    *   A summary HTML page `output/batch_summary.html` will be created, displaying the individual plots (without hover text) in a two-column layout, ordered by prediction score (lowest first).
 
 ## Notes
 
 *   The `download_edits.py` script uses the MediaWiki API to fetch actual revisions. Ensure you respect Wikipedia's API usage policies (e.g., rate limits).
-*   The prediction method is a simple linear extrapolation. More sophisticated methods (like LSTMs) could be implemented for potentially better results.
+*   The prediction method is a simple linear extrapolation. More sophisticated methods could be implemented for potentially better results.
 *   The prediction starts based on the trend derived from the first `N-M` revisions, where `N = --num_revisions` and `M = --num_predictions`.
-*   The hover text displays the output of `difflib.unified_diff`. Very large diffs might be slow to render or cumbersome to read in the hover box.
+*   Hover text showing diffs has been removed from the visualization to improve performance, especially for the batch summary view.
